@@ -46,6 +46,7 @@ public class GridManager : MonoBehaviour
 		}
 	}
 
+	// Get tile neighbors for movement / highlighting
 	private List<Tile> GetTileNeighbors(Vector2Int tilePosition)
 	{
 		List<Tile> neighbors = new List<Tile>();
@@ -68,6 +69,7 @@ public class GridManager : MonoBehaviour
 		return neighbors;
 	}
 
+	// Diagonal tile check
 	private bool IsDiagonal(Tile a, Tile b)
 	{
 		int dx = Mathf.Abs(a.gridPosition.x - b.gridPosition.x);
@@ -76,6 +78,7 @@ public class GridManager : MonoBehaviour
 		return dx == 1 && dy == 1;
 	}
 
+	// Clears grid highlights
 	private void ResetGridHighlights()
 	{
 		foreach(Tile tile in map)
@@ -87,7 +90,8 @@ public class GridManager : MonoBehaviour
 			}
 		}
 	}
-
+	
+	// Calculates tiles to be highlighted using Dijkstra's
 	public List<Tile> GetHighlightRange(Vector2Int start, int range)
 	{
 		ResetGridHighlights();
@@ -127,6 +131,7 @@ public class GridManager : MonoBehaviour
 		return reachable;
 	}
 
+	// Highlights tiles in move range
 	public void HighlightMoveRange(Tile start, int range)
 	{
 		List<Tile> reachableTiles = GetHighlightRange(start.gridPosition, range);
@@ -135,5 +140,11 @@ public class GridManager : MonoBehaviour
 		{
 			tile.ChangeColor(Color.cyan);
 		}
+	}
+
+	// Getter for a tile
+	public Tile getTile(Vector2Int position)
+	{
+		return map[position.x, position.y];
 	}
 }

@@ -21,12 +21,14 @@ public class Tile : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 		tileRenderer = GetComponentInChildren<Renderer>();
 	}
 
+	// Set color of a tile
 	public void ChangeColor(Color newColor)
 	{
 		tileRenderer.material.color = newColor;
 
 	}
 
+	// Color change when mouse enters tile
 	public void OnPointerEnter(PointerEventData eventData)
 	{
 		if(selectedTile != this)
@@ -35,6 +37,7 @@ public class Tile : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 		}
 	}
 
+	// Color change when mouse leaves tile
 	public void OnPointerExit(PointerEventData eventData)
 	{
 		if (selectedTile != this)
@@ -43,7 +46,25 @@ public class Tile : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 		}
 	}
 
+	// When mouse clicks tile
 	public void OnPointerDown(PointerEventData eventData)
+	{
+		SelectTile();
+
+		if(Player.selectedUnit)
+		{
+			if(inMoveRange)
+			{
+				Player.selectedUnit.MoveTo(transform.position, gridPosition);
+			} 
+			else
+			{
+				Player.selectedUnit = null;
+			}
+		}
+	}
+
+	private void SelectTile()
 	{
 		if (selectedTile)
 		{
@@ -52,8 +73,5 @@ public class Tile : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
 		selectedTile = this;
 		ChangeColor(selectedColor);
-
-		FindAnyObjectByType<GridManager>().HighlightMoveRange(this, FindAnyObjectByType<Unit>().movementRange);
 	}
-
 }

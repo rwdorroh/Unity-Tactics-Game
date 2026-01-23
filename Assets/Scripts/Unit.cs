@@ -1,6 +1,7 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class Unit : MonoBehaviour
+public class Unit : MonoBehaviour, IPointerDownHandler
 
 {
 	public Vector2Int gridPosition;
@@ -11,6 +12,8 @@ public class Unit : MonoBehaviour
 	private const float STOPPING_DISTANCE = 0.01f;
 
 	public int movementRange = 3;
+
+	public Player owner;
 
     // Update is called once per frame
     void Update()
@@ -38,4 +41,8 @@ public class Unit : MonoBehaviour
 		}
 	}
 
+	public void OnPointerDown(PointerEventData eventData)
+	{
+		owner.ChangeSelectedUnit(this);
+	}
 }
