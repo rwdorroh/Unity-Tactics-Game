@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class GridManager : MonoBehaviour
 {
@@ -7,15 +8,18 @@ public class GridManager : MonoBehaviour
 	public int width = 10;
 	public int height = 10;
 	public GameObject tilePrefab;
+	public string valueMap;
+	public const int MAX_MOVE_COST = 5;
 
 	[Header("Materials")]
 	public Material lightMaterial;
 	public Material darkMaterial;
+	public Gradient terrainColors;
 
 	private Tile[,] map;
 
 	// Start is called once before the first execution of Update after the MonoBehaviour is created
-	void Start()
+	void Awake()
 	{
 		map = new Tile[width, height];
 		GenerateGrid();
@@ -40,7 +44,9 @@ public class GridManager : MonoBehaviour
 
 				Tile tileScript = tile.GetComponent<Tile>();
 				tileScript.gridPosition = new Vector2Int(x, y);
-				tileScript.originalColor = renderer.material.color;
+				tileScript.moveCost = valueMap[x * width + y] - '0';
+				float normalizedCost = (float)tileScript.moveCost / MAX_MOVE_COST;
+				tileScript.originalColor = tileScript.moveCost > MAX_MOVE_COST ? Color.red : terrainColors.Evaluate(normalizedCost);
 				map[x, y] = tileScript;
 			}
 		}
@@ -111,10 +117,10 @@ public class GridManager : MonoBehaviour
 
 			foreach (Tile neighbor in GetTileNeighbors(current.gridPosition))
 			{
-				int stepCost = IsDiagonal(current, neighbor) ? 2 : 1;
+				int stepCost = IsDiagonal(current, neighbor) ? 1 + neighbor.moveCost : neighbor.moveCost;
 				int newCost = currentCost + stepCost;
 
-				if (newCost <= range && (!costSoFar.ContainsKey(neighbor) || newCost < costSoFar[neighbor]))
+				if (newCost <= range && (!costSoFar.ContainsKey(neighbor) || newCost < costSoFar[neighbor]) && !neighbor.isOccupied)
 				{
 					costSoFar[neighbor] = newCost;
 					edge.Enqueue(neighbor);
@@ -143,8 +149,87 @@ public class GridManager : MonoBehaviour
 	}
 
 	// Getter for a tile
-	public Tile getTile(Vector2Int position)
+	public Tile GetTile(Vector2Int position)
 	{
 		return map[position.x, position.y];
 	}
+
+	public Tile GetTile(Vector3 position)
+	{
+		float offsetX = width / 2f;
+		float offsetY = height / 2f;
+
+		int x = Mathf.RoundToInt(position.x + offsetX);
+		int y = Mathf.RoundToInt(position.z + offsetY);
+
+		return map[x, y];
+	}
+
+	// Manhatten heuristic for A*
+	private int GetHeuristic (Tile start, Tile end)
+	{
+		return Mathf.Abs(start.gridPosition.x - end.gridPosition.x) + Mathf.Abs(start.gridPosition.y - end.gridPosition.y);
+	}
+
+	private List<Tile> RetracePath(Tile start, Tile end)
+	{
+		List<Tile> path = new List<Tile>();
+
+		Tile current = end;
+
+		while (current != start)
+		{
+			path.Add(current);
+			current = current.parent;
+		}
+
+		path.Reverse();
+		return path;
+	}
+
+	public List<Tile> GetPath(Tile start, Tile end)
+	{
+		List<Tile> open = new List<Tile>();
+		HashSet<Tile> closed = new HashSet<Tile>();
+
+		open.Add(start);
+
+		start.gCost = 0;
+		start.hCost = GetHeuristic(start, end);
+		start.parent = null;
+
+		while (open.Count > 0)
+		{
+			Tile current = open.OrderBy(t => t.fCost).ThenBy(t => t.hCost).First();
+
+			if (current == end)
+			{
+				return RetracePath(start, end);
+			}
+
+			open.Remove(current);
+			closed.Add(current);
+
+			foreach(Tile neighbor in GetTileNeighbors(current.gridPosition))
+			{
+				if (closed.Contains(neighbor) || neighbor.isOccupied) continue;
+
+				int tempG = current.gCost + neighbor.moveCost;
+
+				if (!open.Contains(neighbor) || tempG < neighbor.gCost)
+				{
+					neighbor.gCost = tempG;
+					neighbor.hCost = GetHeuristic(neighbor, end);
+					neighbor.parent = current;
+					if(!open.Contains(neighbor))
+					{
+						open.Add(neighbor);
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
 }

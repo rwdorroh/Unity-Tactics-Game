@@ -575,8 +575,39 @@ MonoBehaviour:
   width: 10
   height: 10
   tilePrefab: {fileID: 6983025180802046142, guid: 006c9b0b00c06d74cadc7c5eddd1ff59, type: 3}
+  valueMap: 43122234564321234565432123456543212345654321223456432122234543211234564322123456543212234554321234564322122345
   lightMaterial: {fileID: 2100000, guid: 7b9097c05f410864382a489b47476619, type: 2}
   darkMaterial: {fileID: 2100000, guid: e98f1de6cbfe35d44bbd3775fed76d1a, type: 2}
+  terrainColors:
+    serializedVersion: 2
+    key0: {r: 0.41509432, g: 0.41313633, b: 0.41313633, a: 1}
+    key1: {r: 0.4451912, g: 0.764151, b: 0.2559185, a: 1}
+    key2: {r: 0.12723757, g: 0.3018868, b: 0, a: 0}
+    key3: {r: 0.2735849, g: 0.18322419, b: 0.058072276, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 14842
+    ctime2: 39128
+    ctime3: 65535
+    ctime4: 0
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: -1
+    m_NumColorKeys: 4
+    m_NumAlphaKeys: 2
 --- !u!1 &1144960609
 GameObject:
   m_ObjectHideFlags: 0
@@ -622,6 +653,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
   gridManager: {fileID: 0}
+  playerUnits:
+  - {fileID: 1527804919}
+  - {fileID: 1635924862}
+  - {fileID: 1772797293}
 --- !u!1001 &1324697490
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -709,8 +744,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Unit
   gridPosition: {x: 4, y: 6}
   moveSpeed: 5
-  movementRange: 3
+  movementRange: 7
   owner: {fileID: 1144960611}
+  path: []
 --- !u!1001 &1635924860
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -798,8 +834,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Unit
   gridPosition: {x: 8, y: 6}
   moveSpeed: 5
-  movementRange: 3
+  movementRange: 7
   owner: {fileID: 1144960611}
+  path: []
 --- !u!1001 &1772797291
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -887,8 +924,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Unit
   gridPosition: {x: 5, y: 2}
   moveSpeed: 5
-  movementRange: 3
+  movementRange: 7
   owner: {fileID: 1144960611}
+  path: []
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
