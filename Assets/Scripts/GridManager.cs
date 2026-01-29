@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 
 public class GridManager : MonoBehaviour
 {
@@ -53,7 +54,7 @@ public class GridManager : MonoBehaviour
 	}
 
 	// Get tile neighbors for movement / highlighting
-	private List<Tile> GetTileNeighbors(Vector2Int tilePosition)
+	private List<Tile> GetTileNeighbors(Vector2Int tilePosition, bool includeDiagonals)
 	{
 		List<Tile> neighbors = new List<Tile>();
 
@@ -64,10 +65,15 @@ public class GridManager : MonoBehaviour
 				int posX = tilePosition.x + x;
 				int posY = tilePosition.y + y;
 
-				if(posX >= 0 && posY >= 0 && posX < width && posY < height && new Vector2Int(posX, posY) != tilePosition)
-				{
-					neighbors.Add(map[posX, posY]);
-				}
+				if (posX < 0 || posY < 0 || posX >= width || posY >= height) continue;
+
+				Tile current = map[posX, posY];
+
+				if (current.gridPosition == tilePosition) continue;
+
+				if (!includeDiagonals && IsDiagonal(map[tilePosition.x, tilePosition.y], current)) continue;
+
+				neighbors.Add(current);
 
 			}
 		}
@@ -85,24 +91,25 @@ public class GridManager : MonoBehaviour
 	}
 
 	// Clears grid highlights
-	private void ResetGridHighlights()
+	public void ResetGridHighlights()
 	{
 		foreach(Tile tile in map)
 		{
 			if (Tile.selectedTile != tile)
 			{
 				tile.inMoveRange = false;
+				tile.inAttackRange = false;
 				tile.ChangeColor(tile.originalColor);
 			}
 		}
 	}
 	
 	// Calculates tiles to be highlighted using Dijkstra's
-	public List<Tile> GetHighlightRange(Vector2Int start, int range)
+	public List<Tile> GetHighlightRange(Vector2Int start, int moveRange, int attackRange)
 	{
 		ResetGridHighlights();
 
-		List<Tile> reachable = new List<Tile>();
+		List<Tile> moveTiles = new List<Tile>();
 		Dictionary<Tile, int> costSoFar = new Dictionary<Tile, int>();
 		Queue<Tile> edge = new Queue<Tile>();
 
@@ -115,36 +122,69 @@ public class GridManager : MonoBehaviour
 			Tile current = edge.Dequeue();
 			int currentCost = costSoFar[current];
 
-			foreach (Tile neighbor in GetTileNeighbors(current.gridPosition))
+			foreach (Tile neighbor in GetTileNeighbors(current.gridPosition, true))
 			{
 				int stepCost = IsDiagonal(current, neighbor) ? 1 + neighbor.moveCost : neighbor.moveCost;
 				int newCost = currentCost + stepCost;
 
-				if (newCost <= range && (!costSoFar.ContainsKey(neighbor) || newCost < costSoFar[neighbor]) && !neighbor.isOccupied)
+				if (newCost <= moveRange && (!costSoFar.ContainsKey(neighbor) || newCost < costSoFar[neighbor]) && !neighbor.isOccupied)
 				{
 					costSoFar[neighbor] = newCost;
 					edge.Enqueue(neighbor);
 
-					if(!reachable.Contains(neighbor) && neighbor !=  startTile)
+					if(!moveTiles.Contains(neighbor) && neighbor !=  startTile)
 					{
-						reachable.Add(neighbor);
+						moveTiles.Add(neighbor);
 						neighbor.inMoveRange = true;
 					}
 				}
 			}
 		}
 
-		return reachable;
+		HashSet<Tile> attackTiles = new HashSet<Tile>();
+
+		foreach (Tile origin in moveTiles.Concat(new List<Tile>  { startTile }))
+		{
+			Queue<(Tile tile, int distance)> attackQueue = new Queue<(Tile, int)>();
+
+			attackQueue.Enqueue((origin, 0));
+			HashSet<Tile> visited = new HashSet<Tile> { origin };
+
+			while (attackQueue.Count > 0)
+			{
+				var(tile, distance) = attackQueue.Dequeue();
+
+				foreach(Tile neighbor in GetTileNeighbors(tile.gridPosition, false))
+				{
+					if(!visited.Contains(neighbor) && distance + 1 <= attackRange)
+					{
+						visited.Add(neighbor);
+						attackQueue.Enqueue((neighbor, distance + 1));
+						attackTiles.Add(neighbor);
+						neighbor.inAttackRange = true;
+					}
+				}
+			}
+		}
+
+		return moveTiles.Concat(attackTiles).Distinct().ToList();
 	}
 
 	// Highlights tiles in move range
-	public void HighlightMoveRange(Tile start, int range)
+	public void HighlightRange(Tile start, int moveRange, int attackRange)
 	{
-		List<Tile> reachableTiles = GetHighlightRange(start.gridPosition, range);
+		List<Tile> reachableTiles = GetHighlightRange(start.gridPosition, moveRange, attackRange);
 
 		foreach(Tile tile in reachableTiles)
 		{
-			tile.ChangeColor(Color.cyan);
+			if(tile.inMoveRange)
+			{
+				tile.ChangeColor(Color.cyan);
+			}
+			else if(tile.inAttackRange)
+			{
+				tile.ChangeColor(Color.red);
+			}
 		}
 	}
 
@@ -210,7 +250,7 @@ public class GridManager : MonoBehaviour
 			open.Remove(current);
 			closed.Add(current);
 
-			foreach(Tile neighbor in GetTileNeighbors(current.gridPosition))
+			foreach(Tile neighbor in GetTileNeighbors(current.gridPosition, true))
 			{
 				if (closed.Contains(neighbor) || neighbor.isOccupied) continue;
 

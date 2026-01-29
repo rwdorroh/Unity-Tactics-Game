@@ -15,6 +15,7 @@ public class Tile : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 	private Renderer tileRenderer;
 	public static Tile selectedTile;
 	public bool inMoveRange = false;
+	public bool inAttackRange = false;
 
 	public int moveCost = 0;
 
@@ -53,19 +54,20 @@ public class Tile : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 	{
 		if (selectedTile != this)
 		{
-			ChangeColor(inMoveRange? Color.cyan : originalColor);
+			ChangeColor(inMoveRange? Color.cyan : inAttackRange ? Color.red : originalColor);
 		}
 	}
 
 	// When mouse clicks tile
 	public void OnPointerDown(PointerEventData eventData)
 	{
-		SelectTile();
 
 		GridManager gridManager = GetComponentInParent<GridManager>();
 
 		if(Player.selectedUnit)
 		{
+			if (Player.selectedUnit.isMoving) return;
+
 			if(inMoveRange)
 			{
 				gridManager.GetTile(Player.selectedUnit.gridPosition).isOccupied = false;
@@ -78,6 +80,9 @@ public class Tile : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 				Player.selectedUnit = null;
 			}
 		}
+
+		SelectTile();
+		gridManager.ResetGridHighlights();
 	}
 
 	private void SelectTile()
